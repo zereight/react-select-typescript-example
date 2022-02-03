@@ -25,30 +25,48 @@ interface MultiInput {
 
 interface Props {
   title: string;
+  data: string[];
   placeholder?: string;
   isClearable?: boolean;
   isDisabled?: boolean;
   isRequired: boolean;
-  delayMs: number;
-  callback: (inputValue: string) => void;
-  singleInput: SingleInput | null;
-  multiInput: MultiInput | null;
+  delayMs?: number;
+  singleInput?: SingleInput;
+  multiInput?: MultiInput;
+  amountShowItem?: number;
 }
 
 const DebouncedSelector = ({
+  data,
   title,
   isClearable = false,
   isDisabled = false,
-  placeholder,
-  delayMs,
+  placeholder = "",
+  delayMs = 1000,
   isRequired,
-  callback,
   singleInput,
   multiInput,
+  amountShowItem = 100,
   ...props
 }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [timeId, setTimeId] = useState<NodeJS.Timeout | null>(null);
+
+  const filterValues = (inputValue: string) => {
+    const options = data.map(_data => {
+      return {
+        label: _data,
+        value: _data
+      };
+    });
+
+    return options
+      .filter(option =>
+        option.label.toLowerCase().includes(inputValue.toLowerCase())
+      )
+      .slice(0, amountShowItem)
+      .sort((prev, next) => prev.label.length - next.label.length);
+  };
 
   const getAsyncOptions = (inputValue: string) =>
     new Promise(resolve => {
@@ -58,7 +76,7 @@ const DebouncedSelector = ({
 
       const newTimeId = setTimeout(() => {
         setIsLoading(true);
-        resolve(callback(inputValue));
+        resolve(filterValues(inputValue));
         setIsLoading(false);
       }, delayMs);
 
